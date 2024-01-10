@@ -1,53 +1,158 @@
 const { askForName, playerTurn, exitProgram } = require("./cli");
-const { matrix, modifyMatrix } = require("./matrix");
 
 async function main() {
   const player1 = await askForName("Hi, player 1, what's your name?");
   const player2 = await askForName("Hi, player 2, what's your name?");
-  let currentTurn = 1;
+
+  let turn = 0;
+  let board = [];
+  // let inversedBoard = [];
+
+  for (let i = 0; i < 3; i++) {
+    board.push([" ", " ", " "]);
+    // inversedBoard.push([" ", " ", " "]);
+  }
 
   while (true) {
     let turnResponse;
 
-    if (currentTurn % 2 == 1) {
-      await player1Cycle();
-    } else {
-      await player2Cycle();
-    }
-
-    async function player1Cycle() {
+    if (turn % 2 === 0) {
       turnResponse = await playerTurn(player1, "X");
-    }
-
-    async function player2Cycle() {
+    } else {
       turnResponse = await playerTurn(player2, "O");
     }
 
-    let acceptTurn = modifyMatrix(turnResponse);
+    let row = turnResponse[0];
+    let column = turnResponse[1];
 
-    if (currentTurn === 9 ) {
-      console.log(`It's a draw! No winner.`);
-      console.log(`Shake hands and go home, ${player1} and ${player2}`);
-      console.log(`You are both losers.`);
-      exitProgram();
-    } else if (acceptTurn[1] === 1) {
-      console.log(`We have a winner!`);
+    if (board[row - 1][column - 1] !== " ") {
+      console.log("Square already marked!\n");
+      continue;
+    }
 
-      if (currentTurn % 2 === 1) {
-        console.log(`Congratulations, ${player1}!`)
-      } else {
-        console.log(`Congratulations, ${player2}!`)
+    if (turn % 2 === 0) {
+      board[row - 1][column - 1] = "X";
+    } else {
+      board[row - 1][column - 1] = "O";
+    }
+
+    printBoard(board);
+    console.log("\n");
+
+    if (turn > 3) {
+      let winner = checkWinner(board);
+
+      if (winner === "X") {
+        console.log("Player '" + player1 + "'  Won!");
+        exitProgram();
       }
-
-      console.log(`You receive nothing for your efforts.`);
-      console.log(`Alexa, exit program.\n`);
+      if (winner === "Y") {
+        console.log("Player " + player2 + " Won!");
+        exitProgram();
+      }
+    }
+    if(turn === 9){
+      console.log("\nGame Drawn GG!")
       exitProgram();
     }
-
-    if (acceptTurn[0] === 1) {
-      currentTurn++;
-    }
+    turn++;
   }
 }
+
+function printBoard(board) {
+  console.log("-------");
+  for (let i = 0; i < 3; i++) {
+    process.stdout.write("|");
+
+    for (let j = 0; j < 3; j++) {
+      process.stdout.write(board[i][j] + "|");
+    }
+    console.log("\n-------");
+  }
+}
+
+function checkWinner(board){
+  function checkRow(){
+    for (let i = 0; i < 3; i += 1) {
+      let startSquare = board[i][0];
+
+      for (let j = 1; j < 3; j += 1) {
+        if (board[i][j] !== startSquare) return false;
+      }
+    }
+    return startSquare;
+  }
+
+  function checkCol(){
+    for (let i = 0; i < 3; i += 1) {
+      let startSquare = board[0][i];
+  
+      for (let j = 1; j < 3; j += 1) {
+        if (board[j][i] !== startSquare) return false;
+      }
+  
+      return startSquare;
+    }
+  }
+
+  function checkBackwardSlash(){
+    let startSquare = board[0][0];
+
+    for (let i = 1; i < 3; i += 1) {
+      if (board[i][i] !== startSquare) return false;
+    }
+    return startSquare;
+  }
+
+  function checkForwardSlash(){
+    startSquare = board[0][2];
+  
+    for (let i = 1; i < 3; i += 1) {
+      if (board[i][2-i] === startSquare) return false;
+    }
+    return startSquare;
+  }
+
+  const checkOutput = checkRow() || checkCol() || checkBackwardSlash() || checkForwardSlash();
+
+  return checkOutput ? checkOutput : " ";
+}
+/*
+function checkWinner(board) {
+  let inversedBoard = [];
+  for (let i = 0; i < 3; i++) {
+    inversedBoard.push([" ", " ", " "]);
+  }
+
+  let rightToLeftDiaganolMatches = 0;
+  let rightToLeftDiaganolfirst = board[0][0];
+
+  let leftToRightDiaganolmatches = 0;
+  let leftToRightDiaganolFirst = board[0][2];
+
+  for (let i = 0; i < 3; i++) {
+    let fElement = board[i][0];
+    let rowMatches = 0;
+
+    if (board[i][i] === rightToLeftDiaganolfirst) rightToLeftDiaganolMatches++;
+    if (board[i][board.length - 1 - i] === leftToRightDiaganolFirst)leftToRightDiaganolmatches++;
+
+    for (let j = 0; j < 3; j++) {
+      inversedBoard[j][i] = board[i][j];
+
+      if (fElement !== " ") {
+        if (board[i][j] === fElement) {
+          rowMatches++;
+        }
+      }
+    }
+    if (rowMatches === 3) return fElement;
+    if (rightToLeftDiaganolMatches === 3) return rightToLeftDiaganolfirst;
+    if (leftToRightDiaganolmatches === 3) return leftToRightDiaganolFirst;
+  }
+
+  return checkWinner(inversedBoard);
+}
+*/
 
 main();
